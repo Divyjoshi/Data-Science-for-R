@@ -1,12 +1,12 @@
 ---
-title: "dummy"
+title: "Data Manipulation and cleaning"
 author: "Divy Joshi"
 output: word_document
 ---
 
 ## Two ways to prepare Dataset
 
-#1. Type the variables and the data in
+#1. Type the variables and the data in 
 
 ```{r}
 #1. type the variables and the data in
@@ -35,7 +35,7 @@ abline(model1)
 
 ```
 
-#BASICS - Data Manipulation
+# BASICS - Data Manipulation
 
 ```{r}
 #data()
