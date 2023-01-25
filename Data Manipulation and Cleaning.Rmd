@@ -1,0 +1,737 @@
+---
+title: "dummy"
+author: "Divy Joshi"
+output: word_document
+---
+
+## Two ways to prepare Dataset
+
+#1. Type the variables and the data in
+
+```{r}
+#1. type the variables and the data in
+
+#define the variables
+x=1:10
+y=c(2,3,5,8,10,12,13,16,18,20)
+
+#create a data frame
+data=data.frame(x,y)
+
+#check the dataset
+View(data)
+
+#check the variables in the data
+names(data)
+
+#scatterplot
+plot(x,y)
+
+#fit a simple linear regression model
+model1=lm(y~x)
+
+#add the fitted model line into the scatterplot
+abline(model1)
+
+```
+
+#BASICS - Data Manipulation
+
+```{r}
+#data()
+
+library(readxl)
+BMI <- read_excel("C:/Users/divyj/Downloads/BMI.xlsx")
+View(BMI)
+head(BMI)
+```
+
+```{r}
+# Tidyverse Libraray
+
+library(tidyverse)
+
+colnames(BMI)[4] = "Weight"
+colnames(BMI)[3] = "Height"
+
+
+BMI %>%  # %>% to continue the code
+  select(Gender, Weight, Height , Age) %>%
+  filter(Age > 20) %>%
+  na.omit() %>% # To remove the null values
+  mutate(Height = replace(Height, Height == 5.8, 176)) %>% # Replacing a Value
+  mutate(Height = Height/100) %>%
+  mutate(BMI_Calc = Weight/Height^2) %>%
+  group_by(Gender) %>%
+  summarise(Average_BMI = mean(BMI_Calc))
+
+BMI$Height[BMI$Height == 5.8] <- 176
+BMI
+```
+
+```{r}
+
+# Adding a New Column
+
+descr <- c()
+
+for (i in BMI$Height) {
+if (i < 155) {
+  descr <- append(descr,"Small")
+} else if (i > 155 & i < 165) {
+  descr <- append(descr,"Meduim")
+} else {
+  descr <- append(descr,"Large")
+}
+}
+descr
+
+new_col = data.frame(descr)
+new_col
+
+# Adding Column to Final data
+
+BMI_F <- cbind(BMI,new_col)
+BMI_F
+```
+
+# Types of DAta
+
+```{r}
+str(BMI_F)
+```
+
+```{r}
+
+# Changing the data type
+
+BMI_F$descr <- as.factor(BMI_F$descr)
+BMI_F$Age <- as.integer(BMI_F$Age)
+levels(BMI_F$descr)
+str(BMI_F)
+```
+
+```{r}
+
+# Changing the Levels
+
+BMI_F$descr <- factor(BMI_F$descr, 
+                      levels = c("Small","Meduim","Large"))
+levels(BMI_F$descr)
+```
+
+```{r}
+
+# Work on Vectors
+
+# BMI_F$Age # is a vector
+BMI_F$Old <- BMI_F$Age > 23 #Creating a new column
+BMI_F
+class(BMI_F$Old)
+str(BMI_F)
+```
+
+# Renaming Variables and Recorder Columns
+
+```{r}
+
+new <- BMI_F %>%
+  select(Age, Height, Weight, Gender) %>%
+  rename(mass = Weight)
+new
+BMI_F
+```
+
+# Recoding Data - Without using If else
+
+```{r}
+library(dplyr)
+
+sw <- BMI_F %>%
+  select(Age, Height, Weight, Gender, Old) %>%
+  na.omit() %>%
+  mutate(Height = Height / 100) %>%
+  #filter(Gender == "Male" | 
+           #Gender == "Female") 
+  filter(Gender %in% c("Male", "Female")) %>% # Can filter more than one
+  mutate(Gender = recode(Gender,Male = "M", Female = "F")) %>%
+  mutate(size = Height > 1 & Weight > 75,
+         size = if_else(size == TRUE, "big", "small"))
+sw       
+```
+
+# Filter
+
+```{r}
+data("msleep")
+View(msleep)
+```
+
+```{r}
+
+my_data <- msleep %>%
+  select(name, sleep_total, order) %>%
+#  filter(sleep_total > 18)
+  filter(!sleep_total > 18)
+my_data
+```
+
+```{r}
+
+my_data1 <- msleep %>%
+  select(name,order,bodywt, sleep_total) %>%  
+# filter(order == "Primates", bodywt > 20)   #and
+# filter(order == "Primates" | bodywt > 20)  #OR
+  filter(order == "Primates" & bodywt > 20) #and
+my_data1
+```
+
+```{r}
+
+my_data2 <- msleep %>%
+  select(name, sleep_total) %>%
+  filter(name == "Cow" |
+           name == "Dog" |
+           name == "Goat")
+my_data2
+
+```
+
+```{r}
+
+#Concatenation
+
+my_data3 <- msleep %>%
+  select(name, sleep_total) %>%
+  filter(name %in% c("Cow", "Dog", "Horse"))
+my_data3
+```
+
+```{r}
+
+# Between
+
+my_data4 <- msleep %>%
+  select(name, sleep_total) %>%
+  filter(between(sleep_total, 16, 18))
+my_data4
+```
+
+```{r}
+
+# Near - How close
+
+library(tidyverse)
+my_data5 <- msleep %>%
+  select(name, sleep_total) %>%
+  filter(near(sleep_total, 17, tol = 0.5))
+my_data5
+```
+
+```{r}
+
+# Null values
+
+my_data6 <- msleep %>%
+  select(name, conservation, sleep_total) %>%
+  filter(!is.na(conservation))
+my_data6
+```
+
+# Exploring Data
+
+```{r}
+
+dim(msleep) # Rows and Columns
+str(msleep) # Data types
+glimpse(msleep)
+head(msleep)
+tail(msleep)
+
+```
+
+```{r}
+
+attach(msleep)
+names(msleep)
+class(genus)
+length(sleep_total)
+unique(conservation)
+```
+
+```{r}
+View(sort(table(conservation), decreasing = TRUE))
+barplot(sort(table(conservation), decreasing = TRUE))
+```
+
+```{r}
+# Same above in tidyverse
+
+msleep %>%
+  select(conservation) %>%
+  count(conservation) %>%
+  arrange(desc(n)) %>%
+  View()
+```
+
+# Missing Values
+
+```{r}
+
+#msleep[,5]
+
+View(msleep[is.na(conservation), ])
+```
+
+# Data Manipulation
+
+```{r}
+# Renaming  a varibale
+
+msleep %>% 
+  rename("conserv" = "conservation") %>%  # New Name - Existing Name
+  glimpse()
+
+# Re order Variable
+
+msleep %>% 
+  select(vore, name, everything())
+
+# Change a varible type
+
+msleep$vore <- as.factor(msleep$vore)
+glimpse(msleep)
+
+## --  Same with tidyverse -- 
+
+msleep %>% 
+  mutate(vore = as.character(vore)) %>% 
+  glimpse()
+
+# Select varaibles to work with
+
+names(msleep)
+
+msleep %>% 
+  select(2:4,
+         awake,
+         starts_with("sleep"),
+         contains("wt")) %>% 
+  names()
+
+
+# Filter and Arranging 
+
+unique(msleep$order)
+
+msleep %>% 
+  filter((order == "Carnivora" |
+          order == "Primates" ) & sleep_total > 8 ) %>% 
+  select(name, order, sleep_total) %>% 
+  arrange(-sleep_total) %>% 
+  View
+
+### --- Another Way ---
+
+msleep %>% 
+  filter(order %in% c("Carnivora", "Primates") & sleep_total >  8) %>% 
+  select(name, order, sleep_total) %>% 
+  arrange(order) %>% 
+  View
+
+# Change Observations 
+
+msleep %>% 
+  mutate(brainw_in_grams = brainwt * 1000) %>% 
+  View
+
+# COnditional Change using If Else
+
+size_brain <- msleep %>% 
+  select(name, brainwt) %>% 
+  drop_na(brainwt) %>% 
+  mutate(brain_size = if_else(brainwt > 0.01, "Large", "Small"))
+size_brain
+
+
+# Recoding Data
+
+size_brain %>% 
+  mutate(size_brain = recode(brain_size, "Large" = 1, "Small" = 2))
+size_brain
+```
+
+# Reshaping Data from wide to long or long to wide\_
+
+```{r}
+
+library(gapminder)
+View(gapminder)
+
+data <- select(gapminder, country, year, lifeExp)
+data
+
+```
+
+```{r}
+
+# Wide data - Transposing Data
+
+wide_data <- data %>% 
+  pivot_wider(names_from = year, values_from = lifeExp)
+
+View(wide_data)
+
+long_data <- wide_data %>% 
+  pivot_longer(2:13,
+               names_to = "year",
+               values_to = "lifeExp")
+View(long_data)
+```
+
+# Describing and Summarising Data
+
+```{r}
+library(tidyverse)
+
+glimpse(msleep)
+
+min(msleep$awake)
+max(msleep$awake)
+range(msleep$awake)
+IQR(msleep$awake)
+mean(msleep$awake)
+median(msleep$awake)
+var(msleep$awake)
+
+```
+
+```{r}
+summary(msleep)
+summary(msleep$sleep_total)
+```
+
+```{r}
+
+msleep %>% 
+  select(sleep_total, brainwt) %>% 
+  summary
+```
+
+```{r}
+
+# Creating a summary table
+
+msleep %>% 
+  drop_na(vore) %>% 
+  group_by(vore) %>% 
+  summarise(Lower = min(sleep_total),
+            Average = mean(sleep_total),
+            Upper = max(sleep_total),
+            Difference = max(sleep_total) - min(sleep_total)) %>% 
+  arrange(Average) %>% 
+  View()
+
+```
+
+```{r}
+
+# Creating Contingency table
+
+library(MASS)
+attach(Cars93)
+glimpse(Cars93)
+```
+
+```{r}
+
+table(Origin)
+table(AirBags, Origin)
+addmargins(table(AirBags, Origin),1) # 1- rows, 2 - columns
+```
+
+```{r}
+prop.table(table(AirBags,Origin))*100 # Try 1 and 2 after ", " tht add up 100 %
+```
+
+```{r}
+round(prop.table(table(AirBags, Origin), 2)*100)
+```
+
+```{r}
+
+# -- All of above in tidyverse --
+
+Cars93 %>% 
+  group_by(Origin, AirBags) %>% 
+  summarise(number = n()) %>% # Counting how many
+  pivot_wider(names_from = Origin, values_from = number)
+```
+
+# working with Factors and categorial Variables - Package [ Forcast ]
+
+```{r}
+
+library(tidyverse)
+library(forcats)
+library(patchwork)
+
+?forcats
+
+View(gss_cat) # Inbuilt data in Forcats
+```
+
+```{r}
+glimpse(gss_cat)
+```
+
+```{r}
+unique(gss_cat$race)
+```
+
+```{r}
+gss_cat %>% 
+  pull(race) %>%  #Pulling race variable out as a vector, as do not want to see it as a dataframe
+  unique()
+```
+
+```{r}
+# Counting
+count(gss_cat, race, sort = T) # dataframe, vector, sort
+```
+
+```{r}
+# Same above
+
+gss_cat %>% 
+  count(race)
+
+# Levels
+
+gss_cat %>% 
+  pull(race) %>% 
+  levels()
+
+# Table
+
+gss_cat %>% 
+  pull(race) %>% 
+  table()
+```
+
+```{r}
+
+# If we want to get rid of factor - "Not applicable" thats not usable at all
+
+# Using package Forcat
+
+gss_cat %>% 
+  mutate(race = fct_drop(race)) %>% 
+  pull(race) %>% 
+  levels()
+```
+
+```{r}
+# Order a factor level by value
+# of another numeric value
+
+gss_cat %>% 
+  drop_na(tvhours) %>% 
+  group_by(relig) %>%
+  summarise(mean_tv = mean(tvhours)) %>% 
+  ggplot(aes(mean_tv, relig)) +
+  geom_point(size = 4)
+```
+
+```{r}
+
+# Exact same code above, only reordering religion by fct_order [ Forcart ]
+
+gss_cat %>% 
+  drop_na(tvhours) %>% 
+  group_by(relig) %>% 
+  summarise(mean_tv = mean(tvhours)) %>% 
+  mutate(relig = fct_reorder(relig, mean_tv)) %>% 
+  ggplot(aes(mean_tv, relig)) +
+  geom_point(size = 5)
+```
+
+```{r}
+
+# Reverse Factor Levels - Income graph
+
+gss_cat %>% 
+  drop_na(age) %>% 
+  filter(rincome != "Not applicable") %>% 
+  group_by(rincome) %>% 
+  summarise(mean_age = mean(age)) %>% 
+  ggplot(aes(mean_age, rincome)) +
+  geom_point(size = 4)
+```
+
+```{r}
+
+# Reordering above code
+
+gss_cat %>% 
+  drop_na(age) %>% 
+  filter(rincome != "Not applicable") %>% 
+  group_by(rincome) %>% 
+  summarise(mean_age = mean(age)) %>% 
+  mutate(rincome = fct_rev(rincome)) %>% 
+  ggplot(aes(mean_age, rincome)) +
+  geom_point(size = 4)
+```
+
+```{r}
+
+# order factor levels by frequency of the value of that variable
+
+gss_cat %>% 
+  count(marital)
+```
+
+```{r}
+
+gss_cat %>% 
+  ggplot(aes(marital)) + geom_bar()
+
+```
+
+```{r}
+
+gss_cat %>% 
+  mutate(marital = fct_infreq(marital)) %>% # Order frequency
+  mutate(marital = fct_rev(marital)) %>% # Order frequency
+  count(marital)
+```
+
+```{r}
+
+gss_cat %>% 
+  mutate(marital = marital %>% fct_infreq() %>% fct_rev()) %>% 
+  ggplot(aes(marital))+
+  geom_bar(fill = "steelblue", aplha = 0.5) + 
+  theme_bw()
+```
+
+```{r}
+
+unique(gss_cat$partyid)
+
+# Recode Factors
+
+gss_cat %>% 
+  mutate(partyid = fct_recode(partyid,
+                               "Other" = "No answer",
+                               "Other" = "Don't know",
+                               "Other" = "Other party")) %>% 
+  count(partyid)
+```
+
+```{r}
+
+# Factor Collapse - dose the same thing as above
+
+gss_cat %>% 
+  mutate(partyid = fct_collapse(partyid,
+                                other = c("No answer", "Don't know", "Other party"))) %>% 
+  count(partyid)
+```
+
+```{r}
+
+# Lumping into Other - need only first two then all goes in Other
+
+gss_cat %>% 
+  count(relig, sort = T)
+
+gss_cat %>% 
+  mutate(relig = fct_lump(relig, n = 2)) %>% 
+  count(relig)
+
+```
+
+```{r}
+
+# Reordering a factor y by its value corresponding to the largest x value
+
+gss_cat %>% 
+  filter(!is.na(age)) %>% 
+  filter(marital %in% c("Never married",
+                        "Married",
+                        "Widowed")) %>% 
+  count(age, marital) %>% 
+  group_by(age) %>% 
+  mutate(prop = n / sum(n)) %>% 
+  ggplot(aes(age, prop, colour = marital))+
+  geom_line(sie = 2, na.rm = TRUE)+
+  theme_minimal()
+  
+```
+
+```{r}
+boxplot(gss_cat$marital)
+```
+
+# Group By and Summarise
+
+```{r}
+names(msleep)
+```
+
+```{r}
+msleep %>% 
+  drop_na(sleep_rem, vore) %>% 
+  group_by(vore) %>% 
+  summarise('Average total sleep' = mean(sleep_total),
+            'Maximum rem sleep' = max(sleep_rem)) %>% 
+  head
+```
+
+# Seperate and Unite data
+
+```{r}
+library(gapminder)
+View(gapminder)
+
+# Seperate year into century and year
+
+gapminder1 <- gapminder %>% 
+  separate(col = year,
+           into = c("century", "year"),
+           sep = 2)
+head(gapminder1)
+```
+
+```{r}
+
+# Combining centuary and year into date
+
+gapminder1 %>% 
+  unite(col = date,
+        century, year,
+        sep = "")
+```
+
+# Joins
+
+```{r}
+
+library(dplyr)
+data1 <- data.frame(ID = 1:2,                      # Create first example data frame
+                    X1 = c("a1", "a2"),
+                    stringsAsFactors = FALSE)
+data2 <- data.frame(ID = 2:3,                      # Create second example data frame
+                    X2 = c("b1", "b2"),
+                    stringsAsFactors = FALSE)
+
+inner_join(data1, data2, by = "ID")
+left_join(data1, data2, by = "ID")
+right_join(data1, data2, by = "ID")
+full_join(data1, data2, by = "ID")
+semi_join(data1, data2, by = "ID")
+anti_join(data1, data2, by = "ID")
+
+
+```
